@@ -27,8 +27,8 @@ app.get('/getAtual', function(req, res){
           .catch(e => console.error(e.stack))
 });
 
-app.post('/updatePlant', function(req, res){
-	client.query('UPDATE plantas SET luminosidade = $2, umidade = $3, temperatura = $4 WHERE id = $1', [req.body.id, req.body.luminosidade, req.body.umidade, req.body.temperatura]) // your query string here
+app.post('/updateHistory', function(req, res){
+	client.query('INSERT historico SET luminosidade = $2, umidade = $3, temperatura = $4, update_at = now() WHERE planta_id = $1', [req.body.id, req.body.luminosidade, req.body.umidade, req.body.temperatura]) // your query string here
 		  .then( (result) =>{ res.json(result.rows[0]); console.log(result.rows);}) // your callback here
           .catch(e => console.error(e.stack))
 });
@@ -60,5 +60,12 @@ app.post('/saveTree', function(req, res){
 	console.log(req.body);
 	client.query('INSERT INTO plantas (nome, nascimento, especie_id) VALUES ($1, $2, $3)', [req.body.nome, req.body.nascimento, req.body.especie]) // your query string here
           .then(result => res.end('Planta cadastrada com sucesso')) // your callback here
+          .catch(e => console.error(e.stack))
+});
+
+app.post('/saveSpecie', function(req, res){
+	console.log(req.body);
+	client.query('INSERT INTO especies (nome, umidade, luminosidade, temp_min, temp_max) VALUES ($1, $2, $3, $4, $5)', [req.body.nome, req.body.umidade, req.body.luminosidade, req.body.temp_min, req.body.temp_max]) // your query string here
+          .then(result => res.end('Espécie cadastrada com sucesso')) // your callback here
           .catch(e => console.error(e.stack))
 });
