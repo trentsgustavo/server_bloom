@@ -8,10 +8,10 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
 const client = new Client({
-    user: 'postgres',
+    user: 'estudante',
     host: 'localhost',
     database: 'postgres',
-    password: 'postgres',
+    password: 'bloomLife',
     port: 5432,
 });
 

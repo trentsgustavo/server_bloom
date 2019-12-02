@@ -1,10 +1,10 @@
 {
   "name": "node_server",
   "version": "1.0.0",
-  "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "author": "",
   "license": "ISC",
@@ -12,5 +12,14 @@
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
     "pg": "^7.12.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trentsgustavo/server_bloom.git"
+  },
+  "bugs": {
+    "url": "https://github.com/trentsgustavo/server_bloom/issues"
+  },
+  "homepage": "https://github.com/trentsgustavo/server_bloom#readme",
+  "description": ""
 }
