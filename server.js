@@ -9,7 +9,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 const client = new Client({
     user: 'estudante',
-    host: 'localhost',
+    host: '177.44.248.24',
     database: 'postgres',
     password: 'bloomLife',
     port: 5432,
@@ -22,7 +22,7 @@ http.listen(process.env.PORT || port, function () {
 });
 
 app.get('/getAtual', function (req, res) {
-    client.query('SELECT * FROM plantas WHERE atual is true') // your query string here
+    client.query('SELECT P.*, E.* FROM plantas as P INNER JOIN especies AS E ON (E.id = P.especie_id) WHERE atual is true') // your query string here
         .then((result) => { res.json(result.rows[0]); console.log(result.rows); }) // your callback here
         .catch(e => console.error(e.stack))
 });
@@ -50,7 +50,6 @@ app.get('/getTrees', function (req, res) {
 });
 
 app.post('/saveTree', function (req, res) {
-    console.log(req.body);
     client.query('INSERT INTO plantas (nome, nascimento, especie_id) VALUES ($1, $2, $3) RETURNING id', [req.body.nome, req.body.nascimento, req.body.especie]) // your query string here
         .then(result => updateAtual(result.id)) // your callback here
         .catch(e => console.error(e.stack))
@@ -63,14 +62,64 @@ app.post('/saveSpecie', function (req, res) {
         .catch(e => console.error(e.stack))
 });
 
+app.post('/getHistoric', async function (req, res) {
+    var historico = await queryMedia(req.body.planta_id, getPeriod(req.body.time));
+    var especie = await querySpecie();
+    console.log(historico, especie);
+});
+
 function updateAtual(id) {
     let retorno = '';
     client.query('UPDATE plantas SET atual = FALSE') // your query string here
         .then(() => {
             client.query('UPDATE plantas SET atual = TRUE WHERE id = $1', [id])
                 .then(retorno = 'Sua planta favorita foi escolhida')
-                .catch(retorno = err.stack)
+                .catch(err => retorno = err.stack)
         })
-        .catch(retorno = err.stack)
+        .catch(err => retorno = err.stack)
     return retorno;
+}
+function getPeriod(time) {
+    switch (time) {
+        case 's':
+            return '1 WEEK';
+        case 'm':
+            return '1 MONTH';
+        default:
+            return '24 HOURS';
+    }
+}
+
+async function querySpecie() {
+    try{
+        var retorno = await client.query("SELECT E.luminosidade, E.umidade, E.temp_min, E.temp_max FROM plantas as P INNER JOIN especies as E on (P.especie_id = E.id) WHERE p.atual is true");
+        return retorno.rows;
+    }catch(e){
+        console.log(e.stack)
+    }
+}
+
+async function queryMedia(planta_id, time) {
+    try {
+        var retorno = await client.query("SELECT * FROM historico WHERE planta_id = $1 AND update_at BETWEEN NOW() - INTERVAL '" + time + "' AND NOW();", [planta_id]);
+        return retorno.rows;
+    } catch (e) {
+        console.log(e.stack);
+    }
+}
+
+function calculateMedia(rows) {
+
+    var umidadeTotal, luminosidadeTotal, temperaturaTotal, umidade, luminosidade, temperatura;
+    rows.forEach(element => {
+        umidadeTotal = + element.umidade;
+        luminosidadeTotal = + element.luminosidade;
+        temperaturaTotal = + element.temperatura;
+    });
+
+    umidade = umidadeTotal / rows.length;
+    luminosidade = luminosidadeTotal / rows.length;
+    temperatura = temperaturaTotal / rows.length;
+
+    return { umidade: umidade, luminosidade: luminosidade, temperatura: temperatura };
 }
