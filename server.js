@@ -28,10 +28,7 @@ app.get('/getAtual', function (req, res) {
 });
 
 app.post('/updateHistory', function (req, res) {
-console.log(req.body);
-    client.query('INSERT INTO historico (luminosidade, umidade, temperatura, update_at, planta_id) values ($2, $3, $4, now(), $1) RETURNING id', [req.body.id, req.body.luminosidade, req.body.umidade, req.body.temperatura]) // your query string here
-        .then((result) => { res.end('registro inserido com sucesso: ' + result.rows[0].id); }) // your callback here
-        .catch(e => console.error(e.stack))
+    client.query("INSERT INTO historico (luminosidade, umidade, temperatura, update_at, planta_id) values ($2, $3, $4, now() - INTERVAL '1 HOUR', $1) RETURNING id", [req.body.id, req.body.luminosidade, req.body.umidade, req.body.temperatura]).then((result) => { res.end('registro inserido com sucesso: ' + result.rows[0].id); }).catch(e => console.error(e.stack))
 });
 
 app.post('/updateAtual', function (req, res) {
@@ -59,6 +56,12 @@ app.post('/saveTree', function (req, res) {
 app.post('/saveSpecie', function (req, res) {
     client.query('INSERT INTO especies (nome, umidade, luminosidade, temp_min, temp_max) VALUES ($1, $2, $3, $4, $5)', [req.body.nome, req.body.umidade, req.body.luminosidade, req.body.temp_min, req.body.temp_max]) // your query string here
         .then(result => res.end('Espécie cadastrada com sucesso')) // your callback here
+        .catch(e => console.error(e.stack))
+});
+
+app.post('/getGraph', function (req, res) {
+    client.query("SELECT AVG(umidade) AS umidade, AVG(luminosidade) as luminosidade, AVG(temperatura) as temperatura, DATE(update_at) FROM historico WHERE update_at BETWEEN ((NOW() - INTERVAL '1HOUR') - INTERVAL '" + getPeriod(req.body.time) + "') AND (NOW() - INTERVAL '1 HOUR') group by DATE(update_at);")
+        .then(result => res.json(result.rows))
         .catch(e => console.error(e.stack))
 });
 
@@ -103,7 +106,7 @@ function getPeriod(time) {
         case 'm':
             return '1 MONTH';
         default:
-            return '24 HOURS';
+            return '1 DAY';
     }
 }
 
@@ -129,27 +132,15 @@ async function querySpecie() {
 
 async function queryMedia(planta_id, time) {
     try {
-        var retorno = await client.query("SELECT * FROM historico WHERE planta_id = $1 AND update_at BETWEEN NOW() - INTERVAL '" + time + "' AND NOW();", [planta_id]);
-        return calculateMedia(retorno.rows);
+        var retorno = await client.query("SELECT AVG(umidade) AS umidade, AVG(luminosidade) AS luminosidade, AVG(temperatura) AS temperatura  FROM historico WHERE planta_id = $1 AND update_at BETWEEN ((NOW() - INTERVAL '1 HOUR') - INTERVAL '" + time + "') AND (NOW() - INTERVAL '1 HOUR');", [planta_id]);
+        return calculateMedia(retorno.rows[0]);
     } catch (e) {
         console.log(e.stack);
     }
 }
 
 function calculateMedia(rows) {
-
-    var umidadeTotal, luminosidadeTotal, temperaturaTotal, umidade, luminosidade, temperatura;
-    rows.forEach(element => {
-        umidadeTotal = + element.umidade;
-        luminosidadeTotal = + element.luminosidade;
-        temperaturaTotal = + element.temperatura;
-    });
-
-    umidade = umidadeTotal / rows.length;
-    luminosidade = luminosidadeTotal / rows.length;
-    temperatura = temperaturaTotal / rows.length;
-
-    return { umidade: umidade, luminosidade: luminosidade, temperatura: temperatura };
+    return { umidade: rows.umidade, luminosidade: rows.luminosidade, temperatura: rows.temperatura };
 }
 
 function umidadeIdeal(ideal, media) {
