@@ -28,7 +28,9 @@ app.get('/getAtual', function (req, res) {
 });
 
 app.post('/updateHistory', function (req, res) {
-    client.query("INSERT INTO historico (luminosidade, umidade, temperatura, update_at, planta_id) values ($2, $3, $4, now() - INTERVAL '1 HOUR', $1) RETURNING id", [req.body.id, req.body.luminosidade, req.body.umidade, req.body.temperatura]).then((result) => { res.end('registro inserido com sucesso: ' + result.rows[0].id); }).catch(e => console.error(e.stack))
+    client.query("INSERT INTO historico (luminosidade, umidade, temperatura, update_at, planta_id) values ($2, $3, $4, now() - INTERVAL '1 HOUR', $1) RETURNING id", [req.body.id, req.body.luminosidade, req.body.umidade, req.body.temperatura])
+    .then((result) => { res.end('registro inserido com sucesso: ' + result.rows[0].id); })
+    .catch(e => console.error(e.stack))
 });
 
 app.post('/updateAtual', function (req, res) {
