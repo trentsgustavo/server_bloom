@@ -62,7 +62,7 @@ app.post('/saveSpecie', function (req, res) {
 });
 
 app.post('/getGraph', function (req, res) {
-    client.query("SELECT AVG(umidade) AS umidade, AVG(luminosidade) as luminosidade, AVG(temperatura) as temperatura, DATE(update_at) FROM historico WHERE update_at BETWEEN ((NOW() - INTERVAL '1HOUR') - INTERVAL '" + getPeriod(req.body.time) + "') AND (NOW() - INTERVAL '1 HOUR') group by DATE(update_at);")
+    client.query("SELECT AVG(umidade) AS umidade, AVG(luminosidade) as luminosidade, AVG(temperatura) as temperatura, DATE(update_at) FROM historico WHERE update_at BETWEEN ((NOW() - INTERVAL '1HOUR') - INTERVAL '" + getPeriod(req.body.time) + "') AND (NOW() - INTERVAL '1 HOUR') group by DATE(update_at) ORDER BY DATE(update_at);")
         .then(result => res.json(result.rows))
         .catch(e => console.error(e.stack))
 });
