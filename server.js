@@ -164,7 +164,6 @@ function calculateMedia(rows) {
 }
 
 function umidadeIdeal(ideal, media) {
-    console.log('Umidade', ideal, media);
     if (media < (ideal - 1)) {
         return 'down';
     } else if (media > (ideal + 1)) {
@@ -175,7 +174,6 @@ function umidadeIdeal(ideal, media) {
 }
 
 function luminosidadeIdeal(ideal, media) {
-    console.log('luminosidade', ideal + 2, ideal - 2, media);
     if (media < (ideal - 1)) {
         return 'down';
     } else if (media > (ideal + 1)) {
@@ -186,8 +184,6 @@ function luminosidadeIdeal(ideal, media) {
 }
 
 function temperaturaIdeal(temp_min, temp_max, media) {
-    console.log('temperatura', temp_max, temp_min, media);
-
     if (temp_min > media) {
         return 'down';
     } else if (temp_max < media) {
