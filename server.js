@@ -163,9 +163,9 @@ function calculateMedia(rows) {
 }
 
 function umidadeIdeal(ideal, media) {
-    if (media < ideal) {
+    if (media < (ideal + 2)) {
         return 'down';
-    } else if (media > (ideal + 2)) {
+    } else if (media > (ideal - 2)) {
         return 'up';
     } else {
         return 'check';
@@ -173,9 +173,9 @@ function umidadeIdeal(ideal, media) {
 }
 
 function luminosidadeIdeal(ideal, media) {
-    if (media < ideal) {
+    if (media < (ideal + 2)) {
         return 'down';
-    } else if (media > (ideal + 2)) {
+    } else if (media > (ideal - 2)) {
         return 'up';
     } else {
         return 'check';
