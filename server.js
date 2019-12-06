@@ -39,7 +39,13 @@ app.post('/updateAtual', function (req, res) {
 
 app.get('/getSpecies', function (req, res) {
     client.query('SELECT id::text, nome FROM especies ORDER BY nome') // your query string here
-        .then((result) => { res.json(result.rows); }) // your callback here
+        .then((result) => { res.json(result.rows); console.log(result.rows) }) // your callback here
+        .catch(e => console.error(e.stack))
+});
+
+app.post('/getSpecie', function (req, res) {
+    client.query('SELECT * FROM especies WHERE id = $1;', [req.body.id]) // your query string here
+        .then((result) => {res.json(result.rows[0]);}) // your callback here
         .catch(e => console.error(e.stack))
 });
 
@@ -53,6 +59,13 @@ app.post('/saveTree', function (req, res) {
     console.log(req.body);
     client.query('INSERT INTO plantas (nome, nascimento, especie_id) VALUES ($1, $2, $3) RETURNING id', [req.body.nome, req.body.nascimento, req.body.especie]) // your query string here
         .then(result => updateAtual(result.id)) // your callback here
+        .catch(e => console.error(e.stack))
+});
+
+app.post('/updateSpecie', function (req, res) {
+    console.log(req.body);
+    client.query('UPDATE especies SET nome = $1, umidade= $2, luminosidade = $3, temp_min = $4, temp_max = $5 WHERE id = $6', [req.body.nome, req.body.umidade, req.body.luminosidade, req.body.temp_min, req.body.temp_max, req.body.id]) // your query string here
+        .then(result => res.end('Espécie atualizada com sucesso')) // your callback here
         .catch(e => console.error(e.stack))
 });
 
