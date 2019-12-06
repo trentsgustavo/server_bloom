@@ -87,19 +87,20 @@ app.post('/getGraph', function (req, res) {
 app.post('/getHistoric', async function (req, res) {
     var media = await queryMedia(req.body.planta_id, getPeriod(req.body.time));
     var especie = await querySpecie();
+    console.log(especie.umidade_i, especie.luminosidade_i);
 
     var retorno = {
         umidade: {
             valor: Math.round(media.umidade * 100) / 100,
-            status: umidadeIdeal(especie.umidade, media.umidade)
+            status: umidadeIdeal(especie.luminosidade_i, media.umidade)
         },
         luminosidade: {
             valor: Math.round(media.luminosidade * 100) / 100,
-            status: luminosidadeIdeal(especie.luminosidade, media.luminosidade)
+            status: luminosidadeIdeal(especie.umidade_i, media.luminosidade)
         },
         temperatura: {
             valor: Math.round(media.temperatura * 100) / 100,
-            status: temperaturaIdeal(especie.temp_min, especie.temp_max, media.temperatura)
+            status: temperaturaIdeal(especie.temp_min_i, especie.temp_max_i, media.temperatura)
         }
     }
 
@@ -142,7 +143,7 @@ function getMultiplier(time) {
 
 async function querySpecie() {
     try {
-        var retorno = await client.query("SELECT E.luminosidade, E.umidade, E.temp_min, E.temp_max FROM especies as E INNER JOIN plantas as P on (P.especie_id = E.id) WHERE p.atual is true");
+        var retorno = await client.query("SELECT E.luminosidade as luminosidade_i, E.umidade as umidade_i, E.temp_min as temp_min_i, E.temp_max as temp_max_i FROM especies as E INNER JOIN plantas as P on (P.especie_id = E.id) WHERE p.atual is true");
         return retorno.rows[0];
     } catch (e) {
         console.log(e.stack)
@@ -163,9 +164,10 @@ function calculateMedia(rows) {
 }
 
 function umidadeIdeal(ideal, media) {
-    if (media < (ideal + 2)) {
+    console.log('Umidade', ideal, media);
+    if (media < (ideal - 1)) {
         return 'down';
-    } else if (media > (ideal - 2)) {
+    } else if (media > (ideal + 1)) {
         return 'up';
     } else {
         return 'check';
@@ -173,9 +175,10 @@ function umidadeIdeal(ideal, media) {
 }
 
 function luminosidadeIdeal(ideal, media) {
-    if (media < (ideal + 2)) {
+    console.log('luminosidade', ideal + 2, ideal - 2, media);
+    if (media < (ideal - 1)) {
         return 'down';
-    } else if (media > (ideal - 2)) {
+    } else if (media > (ideal + 1)) {
         return 'up';
     } else {
         return 'check';
@@ -183,7 +186,7 @@ function luminosidadeIdeal(ideal, media) {
 }
 
 function temperaturaIdeal(temp_min, temp_max, media) {
-    media = Number.parseFloat(media);
+    console.log('temperatura', temp_max, temp_min, media);
 
     if (temp_min > media) {
         return 'down';
