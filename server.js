@@ -29,8 +29,8 @@ app.get('/getAtual', function (req, res) {
 
 app.post('/updateHistory', function (req, res) {
     client.query("INSERT INTO historico (luminosidade, umidade, temperatura, update_at, planta_id) values ($2, $3, $4, now() - INTERVAL '1 HOUR', $1) RETURNING id", [req.body.id, req.body.luminosidade, req.body.umidade, req.body.temperatura])
-    .then((result) => { res.end('registro inserido com sucesso: ' + result.rows[0].id); })
-    .catch(e => console.error(e.stack))
+        .then((result) => { res.end('registro inserido com sucesso: ' + result.rows[0].id); })
+        .catch(e => console.error(e.stack))
 });
 
 app.post('/updateAtual', function (req, res) {
@@ -50,6 +50,7 @@ app.get('/getTrees', function (req, res) {
 });
 
 app.post('/saveTree', function (req, res) {
+    console.log(req.body);
     client.query('INSERT INTO plantas (nome, nascimento, especie_id) VALUES ($1, $2, $3) RETURNING id', [req.body.nome, req.body.nascimento, req.body.especie]) // your query string here
         .then(result => updateAtual(result.id)) // your callback here
         .catch(e => console.error(e.stack))
@@ -62,8 +63,11 @@ app.post('/saveSpecie', function (req, res) {
 });
 
 app.post('/getGraph', function (req, res) {
-    client.query("SELECT AVG(umidade) AS umidade, AVG(luminosidade) as luminosidade, AVG(temperatura) as temperatura, DATE(update_at) FROM historico WHERE update_at BETWEEN ((NOW() - INTERVAL '1HOUR') - INTERVAL '" + getPeriod(req.body.time) + "') AND (NOW() - INTERVAL '1 HOUR') group by DATE(update_at) ORDER BY DATE(update_at);")
-        .then(result => res.json(result.rows))
+    client.query(getQueryGraph(req.body.time))
+        .then(result => {
+            res.json(result.rows);
+            console.log(result.rows);
+        })
         .catch(e => console.error(e.stack))
 });
 
@@ -134,7 +138,7 @@ async function querySpecie() {
 
 async function queryMedia(planta_id, time) {
     try {
-        var retorno = await client.query("SELECT AVG(umidade) AS umidade, AVG(luminosidade) AS luminosidade, AVG(temperatura) AS temperatura  FROM historico WHERE planta_id = $1 AND update_at BETWEEN ((NOW() - INTERVAL '1 HOUR') - INTERVAL '" + time + "') AND (NOW() - INTERVAL '1 HOUR');", [planta_id]);
+        var retorno = await client.query("SELECT AVG(umidade) AS umidade, AVG(luminosidade) AS luminosidade, AVG(temperatura) AS temperatura  FROM historico WHERE planta_id = $1 AND update_at BETWEEN NOW() - INTERVAL '" + time + "' AND NOW();", [planta_id]);
         return calculateMedia(retorno.rows[0]);
     } catch (e) {
         console.log(e.stack);
@@ -174,5 +178,13 @@ function temperaturaIdeal(temp_min, temp_max, media) {
         return 'up';
     } else {
         return 'check';
+    }
+}
+
+function getQueryGraph(time) {
+    if (time == 'd') {
+        return "SELECT AVG(umidade) AS umidade, AVG(luminosidade) as luminosidade, AVG(temperatura) as temperatura, date_trunc('hour', update_at) as date FROM historico WHERE update_at BETWEEN NOW() - INTERVAL '24 HOURS' AND NOW() GROUP BY date_trunc('hour', update_at) ORDER BY date";
+    } else {
+        return "SELECT AVG(umidade) AS umidade, AVG(luminosidade) as luminosidade, AVG(temperatura) as temperatura, DATE(update_at) FROM historico WHERE update_at BETWEEN NOW() - INTERVAL '" + getPeriod(time) + "' AND NOW() group by DATE(update_at) ORDER BY DATE(update_at);"
     }
 }
